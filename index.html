@@ -84,6 +84,51 @@
             font-weight: bold;
             color: #667eea;
         }
+        
+        .projects-section {
+            margin-top: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            text-align: left;
+        }
+        
+        .projects-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.8em;
+        }
+        
+        .project-card {
+            display: block;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            text-decoration: none;
+            color: #333;
+            border-left: 4px solid #667eea;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .project-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .project-card h3 {
+            color: #667eea;
+            margin-bottom: 8px;
+            font-size: 1.3em;
+        }
+        
+        .project-card p {
+            color: #666;
+            font-size: 0.95em;
+            margin: 0;
+        }
     </style>
 </head>
 <body>
@@ -101,6 +146,14 @@
             <p>
                 Whether you're curious about AI capabilities, looking for inspiration, or just want to see what's possible when humans and AI work together—you're in the right place! <span class="emoji">🚀</span>
             </p>
+        </div>
+        
+        <div class="projects-section">
+            <h2>Featured Projects</h2>
+            <a href="projects/arcade-hub/index.html" class="project-card">
+                <h3>🎮 Arcade Hub</h3>
+                <p>A central hub for classic games including Wordle, Chess, Snake, Minesweeper, and more! Play 13 different games all in one place.</p>
+            </a>
         </div>
         
         <div class="footer">
