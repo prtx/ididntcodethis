@@ -23,9 +23,14 @@ ididntcodethis/
 │   ├── 002.md            # Arcade Hub creation prompt
 │   └── ...               # Additional prompts for future projects
 └── projects/              # Individual project directories
-    └── arcade-hub/        # Arcade Hub - central hub for classic games
+    ├── arcade-hub/        # Arcade Hub - central hub for classic games
+    │   ├── index.html
+    │   ├── styles.css
+    │   └── README.md
+    └── lineup-builder/    # Football Lineup Builder
         ├── index.html
         ├── styles.css
+        ├── script.js
         └── README.md
 ```
 
@@ -39,6 +44,10 @@ ididntcodethis/
 ### 🎮 [Arcade Hub](projects/arcade-hub/)
 
 A central hub for classic games, all in one place! Arcade Hub is a static website designed to be hosted on GitHub Pages, bringing together multiple small games under one cohesive design. Features 13 different games including Wordle, Chess, Snake, Minesweeper, Tic-Tac-Toe, and more.
+
+### ⚽ [Football Lineup Builder](projects/lineup-builder/)
+
+A web-based tool for designing football (soccer) starting lineups. Select formations, choose players from the API-Football database, and visualize your team on an interactive pitch. Save, share, or export your lineups as images.
 
 ---
 
