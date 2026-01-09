@@ -1,0 +1,225 @@
+/* Arcade Hub - Common Stylesheet */
+/* This stylesheet provides a consistent look and feel across all games */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary-color: #667eea;
+    --secondary-color: #764ba2;
+    --accent-color: #f093fb;
+    --text-color: #333;
+    --text-light: #666;
+    --bg-color: #f8f9fa;
+    --card-bg: #ffffff;
+    --border-color: #e0e0e0;
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-hover: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    line-height: 1.6;
+    color: var(--text-color);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Header Styles */
+header {
+    background: var(--card-bg);
+    border-radius: 15px;
+    box-shadow: var(--shadow);
+    padding: 30px;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+header h1 {
+    font-size: 3em;
+    margin-bottom: 10px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.tagline {
+    font-size: 1.2em;
+    color: var(--text-light);
+    font-style: italic;
+}
+
+/* Introduction Section */
+.intro {
+    background: var(--card-bg);
+    border-radius: 15px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: var(--shadow);
+    text-align: center;
+}
+
+.intro h2 {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    font-size: 2em;
+}
+
+.intro p {
+    color: var(--text-light);
+    font-size: 1.1em;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Games Grid */
+.games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+/* Game Card */
+.game-card {
+    background: var(--card-bg);
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: var(--shadow);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    text-align: center;
+    border: 2px solid transparent;
+}
+
+.game-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hover);
+    border-color: var(--primary-color);
+}
+
+.game-icon {
+    font-size: 3em;
+    margin-bottom: 15px;
+}
+
+.game-card h3 {
+    color: var(--primary-color);
+    margin-bottom: 12px;
+    font-size: 1.5em;
+}
+
+.game-card p {
+    color: var(--text-light);
+    margin-bottom: 20px;
+    font-size: 0.95em;
+    line-height: 1.5;
+}
+
+/* Play Button */
+.play-button {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: white;
+    padding: 12px 30px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);
+}
+
+.play-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
+}
+
+.play-button:active {
+    transform: scale(0.98);
+}
+
+/* Footer */
+footer {
+    background: var(--card-bg);
+    border-radius: 15px;
+    padding: 20px;
+    margin-top: 30px;
+    text-align: center;
+    box-shadow: var(--shadow);
+}
+
+footer p {
+    color: var(--text-light);
+    margin: 5px 0;
+}
+
+footer a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: bold;
+}
+
+footer a:hover {
+    text-decoration: underline;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    header h1 {
+        font-size: 2em;
+    }
+
+    .games-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .intro h2 {
+        font-size: 1.5em;
+    }
+}
+
+/* Common Game Page Styles */
+/* These styles can be used by individual game pages */
+
+.game-container {
+    background: var(--card-bg);
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: var(--shadow);
+    margin: 20px auto;
+    max-width: 800px;
+}
+
+.game-title {
+    color: var(--primary-color);
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 2.5em;
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 20px;
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: bold;
+    padding: 8px 16px;
+    border-radius: 8px;
+    background: var(--bg-color);
+    transition: background 0.2s ease;
+}
+
+.back-link:hover {
+    background: var(--border-color);
+}
+
