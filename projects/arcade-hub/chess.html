@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess - Arcade Hub</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .game-area {
+            text-align: center;
+            padding: 20px;
+        }
+        .game-info {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .info-item {
+            background: var(--bg-color);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(8, 60px);
+            gap: 0;
+            justify-content: center;
+            margin: 30px auto;
+            border: 3px solid #333;
+            width: fit-content;
+        }
+        .cell {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5em;
+            cursor: pointer;
+            position: relative;
+        }
+        .cell.light {
+            background: #f0d9b5;
+        }
+        .cell.dark {
+            background: #b58863;
+        }
+        .cell.selected {
+            background: #7fc7ff !important;
+        }
+        .cell.possible {
+            background: #aaffaa !important;
+        }
+        .cell.check {
+            background: #ff6b6b !important;
+        }
+        .status {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin: 15px 0;
+            padding: 10px;
+            border-radius: 8px;
+            background: var(--bg-color);
+        }
+        .reset-btn {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1em;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="game-container">
+            <a href="index.html" class="back-link">← Back to Arcade Hub</a>
+            <h1 class="game-title">♟️ Chess</h1>
+            <p style="text-align: center; color: var(--text-light); margin-bottom: 20px;">
+                Click a piece to select it, then click a valid square to move. White moves first.
+            </p>
+            
+            <div class="game-area">
+                <div class="game-info">
+                    <div class="info-item">Turn: <span id="turn">White</span></div>
+                    <div class="info-item">Status: <span id="status">Playing</span></div>
+                </div>
+                <div class="board" id="board"></div>
+                <button class="reset-btn" onclick="resetGame()">New Game</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const pieces = {
+            'r': '♜', 'n': '♞', 'b': '♝', 'q': '♛', 'k': '♚', 'p': '♟',
+            'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔', 'P': '♙'
+        };
+
+        let board = [
+            ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
+            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+            ['', '', '', '', '', '', '', ''],
+            ['', '', '', '', '', '', '', ''],
+            ['', '', '', '', '', '', '', ''],
+            ['', '', '', '', '', '', '', ''],
+            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+            ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
+        ];
+
+        let selectedCell = null;
+        let currentTurn = 'white';
+        let gameOver = false;
+
+        function initBoard() {
+            const boardDiv = document.getElementById('board');
+            boardDiv.innerHTML = '';
+            
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = `cell ${(r + c) % 2 === 0 ? 'light' : 'dark'}`;
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    cell.textContent = pieces[board[r][c]] || '';
+                    cell.addEventListener('click', () => handleCellClick(r, c));
+                    boardDiv.appendChild(cell);
+                }
+            }
+        }
+
+        function handleCellClick(r, c) {
+            if (gameOver) return;
+
+            const piece = board[r][c];
+            const isWhite = piece && piece === piece.toUpperCase();
+            const isBlack = piece && piece === piece.toLowerCase() && piece !== '';
+
+            if (selectedCell === null) {
+                // Select a piece
+                if (piece && ((currentTurn === 'white' && isWhite) || (currentTurn === 'black' && isBlack))) {
+                    selectedCell = {r, c};
+                    highlightCell(r, c, 'selected');
+                    showPossibleMoves(r, c);
+                }
+            } else {
+                // Try to move
+                if (selectedCell.r === r && selectedCell.c === c) {
+                    // Deselect
+                    clearHighlights();
+                    selectedCell = null;
+                } else {
+                    // Attempt move
+                    if (isValidMove(selectedCell.r, selectedCell.c, r, c)) {
+                        makeMove(selectedCell.r, selectedCell.c, r, c);
+                        clearHighlights();
+                        selectedCell = null;
+                        currentTurn = currentTurn === 'white' ? 'black' : 'white';
+                        document.getElementById('turn').textContent = currentTurn.charAt(0).toUpperCase() + currentTurn.slice(1);
+                        updateDisplay();
+                    } else {
+                        // Invalid move, select new piece if it's your color
+                        clearHighlights();
+                        if (piece && ((currentTurn === 'white' && isWhite) || (currentTurn === 'black' && isBlack))) {
+                            selectedCell = {r, c};
+                            highlightCell(r, c, 'selected');
+                            showPossibleMoves(r, c);
+                        } else {
+                            selectedCell = null;
+                        }
+                    }
+                }
+            }
+        }
+
+        function isValidMove(fromR, fromC, toR, toC) {
+            const piece = board[fromR][fromC];
+            if (!piece) return false;
+
+            const isWhite = piece === piece.toUpperCase();
+            const targetPiece = board[toR][toC];
+            const isTargetWhite = targetPiece && targetPiece === targetPiece.toUpperCase();
+            
+            // Can't capture own pieces
+            if (targetPiece && ((isWhite && isTargetWhite) || (!isWhite && !isTargetWhite))) {
+                return false;
+            }
+
+            const pieceType = piece.toLowerCase();
+
+            // Simple move validation (simplified chess rules)
+            switch (pieceType) {
+                case 'p': // Pawn
+                    const direction = isWhite ? -1 : 1;
+                    const startRow = isWhite ? 6 : 1;
+                    if (fromC === toC && board[toR][toC] === '') {
+                        if (toR === fromR + direction) return true;
+                        if (fromR === startRow && toR === fromR + 2 * direction) return true;
+                    }
+                    if (Math.abs(fromC - toC) === 1 && toR === fromR + direction && targetPiece) {
+                        return true;
+                    }
+                    return false;
+                case 'r': // Rook
+                    return (fromR === toR || fromC === toC) && isPathClear(fromR, fromC, toR, toC);
+                case 'b': // Bishop
+                    return Math.abs(fromR - toR) === Math.abs(fromC - toC) && isPathClear(fromR, fromC, toR, toC);
+                case 'n': // Knight
+                    return (Math.abs(fromR - toR) === 2 && Math.abs(fromC - toC) === 1) ||
+                           (Math.abs(fromR - toR) === 1 && Math.abs(fromC - toC) === 2);
+                case 'q': // Queen
+                    return ((fromR === toR || fromC === toC) || 
+                           (Math.abs(fromR - toR) === Math.abs(fromC - toC))) && 
+                           isPathClear(fromR, fromC, toR, toC);
+                case 'k': // King
+                    return Math.abs(fromR - toR) <= 1 && Math.abs(fromC - toC) <= 1;
+                default:
+                    return false;
+            }
+        }
+
+        function isPathClear(fromR, fromC, toR, toC) {
+            const dr = toR > fromR ? 1 : toR < fromR ? -1 : 0;
+            const dc = toC > fromC ? 1 : toC < fromC ? -1 : 0;
+            
+            let r = fromR + dr;
+            let c = fromC + dc;
+            
+            while (r !== toR || c !== toC) {
+                if (board[r][c] !== '') return false;
+                r += dr;
+                c += dc;
+            }
+            return true;
+        }
+
+        function makeMove(fromR, fromC, toR, toC) {
+            board[toR][toC] = board[fromR][fromC];
+            board[fromR][fromC] = '';
+            
+            // Check for checkmate (simplified)
+            if (board[toR][toC].toLowerCase() === 'k') {
+                // King captured - game over
+                gameOver = true;
+                document.getElementById('status').textContent = `${currentTurn.charAt(0).toUpperCase() + currentTurn.slice(1)} wins!`;
+            }
+        }
+
+        function showPossibleMoves(r, c) {
+            for (let toR = 0; toR < 8; toR++) {
+                for (let toC = 0; toC < 8; toC++) {
+                    if (isValidMove(r, c, toR, toC)) {
+                        highlightCell(toR, toC, 'possible');
+                    }
+                }
+            }
+        }
+
+        function highlightCell(r, c, className) {
+            const cell = document.querySelector(`[data-row="${r}"][data-col="${c}"]`);
+            if (cell) cell.classList.add(className);
+        }
+
+        function clearHighlights() {
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.classList.remove('selected', 'possible', 'check');
+            });
+        }
+
+        function updateDisplay() {
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach((cell, index) => {
+                const r = Math.floor(index / 8);
+                const c = index % 8;
+                cell.textContent = pieces[board[r][c]] || '';
+            });
+        }
+
+        function resetGame() {
+            board = [
+                ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
+                ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+                ['', '', '', '', '', '', '', ''],
+                ['', '', '', '', '', '', '', ''],
+                ['', '', '', '', '', '', '', ''],
+                ['', '', '', '', '', '', '', ''],
+                ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+                ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
+            ];
+            selectedCell = null;
+            currentTurn = 'white';
+            gameOver = false;
+            document.getElementById('turn').textContent = 'White';
+            document.getElementById('status').textContent = 'Playing';
+            clearHighlights();
+            initBoard();
+        }
+
+        initBoard();
+    </script>
+</body>
+</html>
+

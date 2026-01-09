@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connect Four - Arcade Hub</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .game-area {
+            text-align: center;
+            padding: 20px;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(7, 60px);
+            grid-template-rows: repeat(6, 60px);
+            gap: 5px;
+            justify-content: center;
+            margin: 30px auto;
+            background: #1976d2;
+            padding: 10px;
+            border-radius: 10px;
+            width: fit-content;
+        }
+        .cell {
+            width: 60px;
+            height: 60px;
+            background: white;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            transition: background 0.2s;
+        }
+        .cell:hover:not(.filled) {
+            background: #e3f2fd;
+        }
+        .cell.red {
+            background: #f44336;
+        }
+        .cell.yellow {
+            background: #ffc107;
+        }
+        .cell.filled {
+            cursor: not-allowed;
+        }
+        .status {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            background: var(--bg-color);
+        }
+        .reset-btn {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1em;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="game-container">
+            <a href="index.html" class="back-link">← Back to Arcade Hub</a>
+            <h1 class="game-title">🔴 Connect Four</h1>
+            <p style="text-align: center; color: var(--text-light); margin-bottom: 20px;">
+                You are red, computer is yellow. Connect four in a row to win!
+            </p>
+            
+            <div class="game-area">
+                <div class="status" id="status">Your turn (Red)</div>
+                <div class="board" id="board"></div>
+                <button class="reset-btn" onclick="resetGame()">New Game</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const rows = 6;
+        const cols = 7;
+        let board = Array(rows).fill().map(() => Array(cols).fill(0));
+        let currentPlayer = 1; // 1 = player (red), 2 = AI (yellow)
+        let gameActive = true;
+
+        function initBoard() {
+            const boardDiv = document.getElementById('board');
+            boardDiv.innerHTML = '';
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    if (r === 0) {
+                        cell.addEventListener('click', () => handleColumnClick(c));
+                    }
+                    boardDiv.appendChild(cell);
+                }
+            }
+        }
+
+        function handleColumnClick(col) {
+            if (!gameActive || currentPlayer !== 1) return;
+            
+            const row = getNextAvailableRow(col);
+            if (row === -1) return;
+
+            board[row][col] = 1;
+            updateBoard();
+            
+            if (checkWinner(1)) {
+                document.getElementById('status').textContent = 'You Win! 🎉';
+                gameActive = false;
+                return;
+            }
+
+            if (isBoardFull()) {
+                document.getElementById('status').textContent = "It's a Draw!";
+                gameActive = false;
+                return;
+            }
+
+            currentPlayer = 2;
+            document.getElementById('status').textContent = "Computer's turn (Yellow)...";
+            
+            setTimeout(() => {
+                makeAIMove();
+            }, 500);
+        }
+
+        function getNextAvailableRow(col) {
+            for (let r = rows - 1; r >= 0; r--) {
+                if (board[r][col] === 0) return r;
+            }
+            return -1;
+        }
+
+        function makeAIMove() {
+            // Try to win
+            for (let c = 0; c < cols; c++) {
+                const r = getNextAvailableRow(c);
+                if (r !== -1) {
+                    board[r][c] = 2;
+                    if (checkWinner(2)) {
+                        updateBoard();
+                        document.getElementById('status').textContent = 'Computer Wins! 😢';
+                        gameActive = false;
+                        return;
+                    }
+                    board[r][c] = 0;
+                }
+            }
+
+            // Block player
+            for (let c = 0; c < cols; c++) {
+                const r = getNextAvailableRow(c);
+                if (r !== -1) {
+                    board[r][c] = 1;
+                    if (checkWinner(1)) {
+                        board[r][c] = 2;
+                        updateBoard();
+                        currentPlayer = 1;
+                        document.getElementById('status').textContent = 'Your turn (Red)';
+                        return;
+                    }
+                    board[r][c] = 0;
+                }
+            }
+
+            // Random move
+            const available = [];
+            for (let c = 0; c < cols; c++) {
+                if (getNextAvailableRow(c) !== -1) available.push(c);
+            }
+            if (available.length > 0) {
+                const col = available[Math.floor(Math.random() * available.length)];
+                const row = getNextAvailableRow(col);
+                board[row][col] = 2;
+                updateBoard();
+                
+                if (checkWinner(2)) {
+                    document.getElementById('status').textContent = 'Computer Wins! 😢';
+                    gameActive = false;
+                } else if (isBoardFull()) {
+                    document.getElementById('status').textContent = "It's a Draw!";
+                    gameActive = false;
+                } else {
+                    currentPlayer = 1;
+                    document.getElementById('status').textContent = 'Your turn (Red)';
+                }
+            }
+        }
+
+        function checkWinner(player) {
+            // Check horizontal
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols - 3; c++) {
+                    if (board[r][c] === player && board[r][c+1] === player &&
+                        board[r][c+2] === player && board[r][c+3] === player) {
+                        return true;
+                    }
+                }
+            }
+
+            // Check vertical
+            for (let r = 0; r < rows - 3; r++) {
+                for (let c = 0; c < cols; c++) {
+                    if (board[r][c] === player && board[r+1][c] === player &&
+                        board[r+2][c] === player && board[r+3][c] === player) {
+                        return true;
+                    }
+                }
+            }
+
+            // Check diagonal (down-right)
+            for (let r = 0; r < rows - 3; r++) {
+                for (let c = 0; c < cols - 3; c++) {
+                    if (board[r][c] === player && board[r+1][c+1] === player &&
+                        board[r+2][c+2] === player && board[r+3][c+3] === player) {
+                        return true;
+                    }
+                }
+            }
+
+            // Check diagonal (down-left)
+            for (let r = 0; r < rows - 3; r++) {
+                for (let c = 3; c < cols; c++) {
+                    if (board[r][c] === player && board[r+1][c-1] === player &&
+                        board[r+2][c-2] === player && board[r+3][c-3] === player) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        function isBoardFull() {
+            return board[0].every(cell => cell !== 0);
+        }
+
+        function updateBoard() {
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach((cell, index) => {
+                const r = Math.floor(index / cols);
+                const c = index % cols;
+                cell.className = 'cell';
+                if (board[r][c] === 1) {
+                    cell.classList.add('red', 'filled');
+                } else if (board[r][c] === 2) {
+                    cell.classList.add('yellow', 'filled');
+                }
+            });
+        }
+
+        function resetGame() {
+            board = Array(rows).fill().map(() => Array(cols).fill(0));
+            currentPlayer = 1;
+            gameActive = true;
+            document.getElementById('status').textContent = 'Your turn (Red)';
+            initBoard();
+        }
+
+        initBoard();
+    </script>
+</body>
+</html>
+

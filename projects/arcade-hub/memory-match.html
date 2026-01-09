@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Match - Arcade Hub</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .game-area {
+            text-align: center;
+            padding: 20px;
+        }
+        .game-info {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .info-item {
+            background: var(--bg-color);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(4, 100px);
+            gap: 10px;
+            justify-content: center;
+            margin: 30px auto;
+            max-width: 500px;
+        }
+        .card {
+            width: 100px;
+            height: 100px;
+            background: var(--primary-color);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5em;
+            cursor: pointer;
+            transition: transform 0.3s;
+            transform-style: preserve-3d;
+            position: relative;
+        }
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+        }
+        .card-front {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        }
+        .card-back {
+            background: white;
+            transform: rotateY(180deg);
+        }
+        .card.matched {
+            opacity: 0.5;
+            cursor: default;
+        }
+        .reset-btn {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1em;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="game-container">
+            <a href="index.html" class="back-link">← Back to Arcade Hub</a>
+            <h1 class="game-title">🧠 Memory Match</h1>
+            <p style="text-align: center; color: var(--text-light); margin-bottom: 20px;">
+                Flip cards to find matching pairs. Remember their positions!
+            </p>
+            
+            <div class="game-area">
+                <div class="game-info">
+                    <div class="info-item">Moves: <span id="moves">0</span></div>
+                    <div class="info-item">Pairs Found: <span id="pairs">0</span>/8</div>
+                </div>
+                <div class="board" id="board"></div>
+                <div id="message" style="font-size: 1.3em; font-weight: bold; margin: 20px 0;"></div>
+                <button class="reset-btn" onclick="resetGame()">New Game</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const symbols = ['🍎', '🍌', '🍇', '🍊', '🍓', '🍑', '🍒', '🥝'];
+        let cards = [];
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let moves = 0;
+        let lockBoard = false;
+
+        function initBoard() {
+            cards = [...symbols, ...symbols].sort(() => Math.random() - 0.5);
+            const board = document.getElementById('board');
+            board.innerHTML = '';
+            
+            cards.forEach((symbol, index) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.dataset.index = index;
+                card.dataset.symbol = symbol;
+                
+                const front = document.createElement('div');
+                front.className = 'card-front';
+                front.textContent = '?';
+                
+                const back = document.createElement('div');
+                back.className = 'card-back';
+                back.textContent = symbol;
+                
+                card.appendChild(front);
+                card.appendChild(back);
+                card.addEventListener('click', () => flipCard(index));
+                board.appendChild(card);
+            });
+        }
+
+        function flipCard(index) {
+            const card = document.querySelector(`[data-index="${index}"]`);
+            if (lockBoard || card.classList.contains('flipped') || card.classList.contains('matched')) return;
+
+            card.classList.add('flipped');
+            flippedCards.push({index, symbol: card.dataset.symbol});
+
+            if (flippedCards.length === 2) {
+                lockBoard = true;
+                moves++;
+                document.getElementById('moves').textContent = moves;
+                
+                setTimeout(() => {
+                    checkMatch();
+                }, 1000);
+            }
+        }
+
+        function checkMatch() {
+            const [first, second] = flippedCards;
+            
+            if (first.symbol === second.symbol) {
+                document.querySelector(`[data-index="${first.index}"]`).classList.add('matched');
+                document.querySelector(`[data-index="${second.index}"]`).classList.add('matched');
+                matchedPairs++;
+                document.getElementById('pairs').textContent = matchedPairs;
+                
+                if (matchedPairs === 8) {
+                    document.getElementById('message').textContent = `Congratulations! You won in ${moves} moves! 🎉`;
+                }
+            } else {
+                document.querySelector(`[data-index="${first.index}"]`).classList.remove('flipped');
+                document.querySelector(`[data-index="${second.index}"]`).classList.remove('flipped');
+            }
+            
+            flippedCards = [];
+            lockBoard = false;
+        }
+
+        function resetGame() {
+            matchedPairs = 0;
+            moves = 0;
+            flippedCards = [];
+            lockBoard = false;
+            document.getElementById('moves').textContent = moves;
+            document.getElementById('pairs').textContent = matchedPairs;
+            document.getElementById('message').textContent = '';
+            initBoard();
+        }
+
+        initBoard();
+    </script>
+</body>
+</html>
+

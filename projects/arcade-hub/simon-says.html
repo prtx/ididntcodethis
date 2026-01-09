@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simon Says - Arcade Hub</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .game-area {
+            text-align: center;
+            padding: 20px;
+        }
+        .game-info {
+            margin: 20px 0;
+        }
+        .info-item {
+            background: var(--bg-color);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            display: inline-block;
+            margin: 0 10px;
+        }
+        .buttons-container {
+            display: grid;
+            grid-template-columns: repeat(2, 150px);
+            gap: 20px;
+            justify-content: center;
+            margin: 30px auto;
+            max-width: 400px;
+        }
+        .simon-button {
+            width: 150px;
+            height: 150px;
+            border: 5px solid #333;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            font-size: 3em;
+        }
+        .simon-button:hover:not(.disabled) {
+            opacity: 0.8;
+        }
+        .simon-button.disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        .simon-button.active {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+        .red {
+            background: #f44336;
+        }
+        .blue {
+            background: #2196F3;
+        }
+        .green {
+            background: #4caf50;
+        }
+        .yellow {
+            background: #ffc107;
+        }
+        .status {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            background: var(--bg-color);
+        }
+        .start-btn {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        .start-btn:hover {
+            transform: scale(1.05);
+        }
+        .start-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="game-container">
+            <a href="index.html" class="back-link">← Back to Arcade Hub</a>
+            <h1 class="game-title">🎵 Simon Says</h1>
+            <p style="text-align: center; color: var(--text-light); margin-bottom: 20px;">
+                Watch the sequence and repeat it back. The sequence gets longer each round!
+            </p>
+            
+            <div class="game-area">
+                <div class="game-info">
+                    <div class="info-item">Round: <span id="round">0</span></div>
+                    <div class="info-item">Score: <span id="score">0</span></div>
+                </div>
+                <div class="status" id="status">Click Start to begin!</div>
+                <div class="buttons-container">
+                    <button class="simon-button red" id="red" onclick="playerClick(0)"></button>
+                    <button class="simon-button blue" id="blue" onclick="playerClick(1)"></button>
+                    <button class="simon-button green" id="green" onclick="playerClick(2)"></button>
+                    <button class="simon-button yellow" id="yellow" onclick="playerClick(3)"></button>
+                </div>
+                <button class="start-btn" id="startBtn" onclick="startGame()">Start Game</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const colors = ['red', 'blue', 'green', 'yellow'];
+        const sounds = {
+            red: 200,
+            blue: 300,
+            green: 400,
+            yellow: 500
+        };
+        
+        let sequence = [];
+        let playerSequence = [];
+        let round = 0;
+        let score = 0;
+        let isPlaying = false;
+        let isShowingSequence = false;
+
+        function playSound(color) {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = sounds[color];
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.3);
+        }
+
+        function activateButton(index) {
+            const button = document.getElementById(colors[index]);
+            button.classList.add('active');
+            playSound(colors[index]);
+            
+            setTimeout(() => {
+                button.classList.remove('active');
+            }, 500);
+        }
+
+        function showSequence() {
+            isShowingSequence = true;
+            document.getElementById('status').textContent = 'Watch the sequence...';
+            disableButtons();
+            
+            let i = 0;
+            const interval = setInterval(() => {
+                activateButton(sequence[i]);
+                i++;
+                if (i >= sequence.length) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        isShowingSequence = false;
+                        document.getElementById('status').textContent = 'Your turn! Repeat the sequence.';
+                        enableButtons();
+                    }, 500);
+                }
+            }, 600);
+        }
+
+        function playerClick(index) {
+            if (!isPlaying || isShowingSequence) return;
+            
+            activateButton(index);
+            playerSequence.push(index);
+            
+            if (playerSequence[playerSequence.length - 1] !== sequence[playerSequence.length - 1]) {
+                gameOver();
+                return;
+            }
+            
+            if (playerSequence.length === sequence.length) {
+                round++;
+                score += round * 10;
+                document.getElementById('round').textContent = round;
+                document.getElementById('score').textContent = score;
+                playerSequence = [];
+                
+                setTimeout(() => {
+                    nextRound();
+                }, 1000);
+            }
+        }
+
+        function nextRound() {
+            sequence.push(Math.floor(Math.random() * 4));
+            showSequence();
+        }
+
+        function startGame() {
+            sequence = [];
+            playerSequence = [];
+            round = 0;
+            score = 0;
+            isPlaying = true;
+            
+            document.getElementById('round').textContent = round;
+            document.getElementById('score').textContent = score;
+            document.getElementById('startBtn').disabled = true;
+            
+            nextRound();
+        }
+
+        function gameOver() {
+            isPlaying = false;
+            document.getElementById('status').textContent = `Game Over! You reached round ${round}. Final score: ${score}`;
+            document.getElementById('startBtn').disabled = false;
+            disableButtons();
+        }
+
+        function disableButtons() {
+            document.querySelectorAll('.simon-button').forEach(btn => {
+                btn.classList.add('disabled');
+            });
+        }
+
+        function enableButtons() {
+            document.querySelectorAll('.simon-button').forEach(btn => {
+                btn.classList.remove('disabled');
+            });
+        }
+    </script>
+</body>
+</html>
+

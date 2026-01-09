@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sudoku - Arcade Hub</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .game-area {
+            text-align: center;
+            padding: 20px;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(9, 40px);
+            gap: 1px;
+            justify-content: center;
+            margin: 30px auto;
+            background: #000;
+            padding: 2px;
+            border-radius: 5px;
+            width: fit-content;
+        }
+        .cell {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border: 1px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .cell:hover:not(.fixed) {
+            background: var(--bg-color);
+        }
+        .cell.fixed {
+            background: #f0f0f0;
+            color: #333;
+            cursor: default;
+        }
+        .cell.selected {
+            background: #e3f2fd;
+        }
+        .cell.error {
+            background: #ffebee;
+            color: #f44336;
+        }
+        .cell:nth-child(3n) {
+            border-right: 2px solid #000;
+        }
+        .cell:nth-child(n+19):nth-child(-n+27),
+        .cell:nth-child(n+46):nth-child(-n+54) {
+            border-bottom: 2px solid #000;
+        }
+        .controls {
+            margin: 20px 0;
+        }
+        .number-btn {
+            width: 45px;
+            height: 45px;
+            background: var(--bg-color);
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            font-size: 1.2em;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .number-btn:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+        .action-btn {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1em;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .status {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin: 15px 0;
+            padding: 10px;
+            border-radius: 8px;
+            background: var(--bg-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="game-container">
+            <a href="index.html" class="back-link">← Back to Arcade Hub</a>
+            <h1 class="game-title">9️⃣ Sudoku</h1>
+            <p style="text-align: center; color: var(--text-light); margin-bottom: 20px;">
+                Click a cell, then click a number to fill it. Complete the puzzle!
+            </p>
+            
+            <div class="game-area">
+                <div class="status" id="status">Select a cell and enter a number</div>
+                <div class="board" id="board"></div>
+                <div class="controls">
+                    <button class="number-btn" onclick="setNumber(1)">1</button>
+                    <button class="number-btn" onclick="setNumber(2)">2</button>
+                    <button class="number-btn" onclick="setNumber(3)">3</button>
+                    <button class="number-btn" onclick="setNumber(4)">4</button>
+                    <button class="number-btn" onclick="setNumber(5)">5</button>
+                    <button class="number-btn" onclick="setNumber(6)">6</button>
+                    <button class="number-btn" onclick="setNumber(7)">7</button>
+                    <button class="number-btn" onclick="setNumber(8)">8</button>
+                    <button class="number-btn" onclick="setNumber(9)">9</button>
+                    <button class="number-btn" onclick="setNumber(0)">Clear</button>
+                </div>
+                <div>
+                    <button class="action-btn" onclick="checkSolution()">Check</button>
+                    <button class="action-btn" onclick="resetGame()">New Game</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let board = Array(9).fill().map(() => Array(9).fill(0));
+        let solution = Array(9).fill().map(() => Array(9).fill(0));
+        let fixed = Array(9).fill().map(() => Array(9).fill(false));
+        let selectedCell = null;
+
+        function generatePuzzle() {
+            // Generate a valid sudoku solution
+            solution = Array(9).fill().map(() => Array(9).fill(0));
+            solveSudoku(solution);
+            
+            // Copy solution and remove some numbers
+            board = solution.map(row => [...row]);
+            fixed = Array(9).fill().map(() => Array(9).fill(false));
+            
+            // Remove about 40 numbers for difficulty
+            let removed = 0;
+            while (removed < 40) {
+                const r = Math.floor(Math.random() * 9);
+                const c = Math.floor(Math.random() * 9);
+                if (board[r][c] !== 0) {
+                    board[r][c] = 0;
+                    fixed[r][c] = false;
+                    removed++;
+                }
+            }
+            
+            // Mark remaining as fixed
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    if (board[r][c] !== 0) {
+                        fixed[r][c] = true;
+                    }
+                }
+            }
+        }
+
+        function solveSudoku(grid) {
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    if (grid[r][c] === 0) {
+                        const nums = [1,2,3,4,5,6,7,8,9].sort(() => Math.random() - 0.5);
+                        for (let num of nums) {
+                            if (isValid(grid, r, c, num)) {
+                                grid[r][c] = num;
+                                if (solveSudoku(grid)) return true;
+                                grid[r][c] = 0;
+                            }
+                        }
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function isValid(grid, row, col, num) {
+            // Check row
+            for (let c = 0; c < 9; c++) {
+                if (grid[row][c] === num) return false;
+            }
+            // Check column
+            for (let r = 0; r < 9; r++) {
+                if (grid[r][col] === num) return false;
+            }
+            // Check box
+            const boxRow = Math.floor(row / 3) * 3;
+            const boxCol = Math.floor(col / 3) * 3;
+            for (let r = boxRow; r < boxRow + 3; r++) {
+                for (let c = boxCol; c < boxCol + 3; c++) {
+                    if (grid[r][c] === num) return false;
+                }
+            }
+            return true;
+        }
+
+        function initBoard() {
+            const boardDiv = document.getElementById('board');
+            boardDiv.innerHTML = '';
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    if (fixed[r][c]) cell.classList.add('fixed');
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    cell.textContent = board[r][c] || '';
+                    cell.addEventListener('click', () => selectCell(r, c));
+                    boardDiv.appendChild(cell);
+                }
+            }
+        }
+
+        function selectCell(r, c) {
+            if (fixed[r][c]) return;
+            
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.classList.remove('selected', 'error');
+            });
+            
+            selectedCell = {r, c};
+            const cell = document.querySelector(`[data-row="${r}"][data-col="${c}"]`);
+            cell.classList.add('selected');
+        }
+
+        function setNumber(num) {
+            if (!selectedCell) {
+                document.getElementById('status').textContent = 'Please select a cell first!';
+                return;
+            }
+            
+            const {r, c} = selectedCell;
+            if (fixed[r][c]) return;
+            
+            board[r][c] = num;
+            const cell = document.querySelector(`[data-row="${r}"][data-col="${c}"]`);
+            cell.textContent = num || '';
+            cell.classList.remove('error');
+            
+            if (num !== 0 && num !== solution[r][c]) {
+                cell.classList.add('error');
+            }
+        }
+
+        function checkSolution() {
+            let correct = true;
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    if (board[r][c] !== solution[r][c]) {
+                        correct = false;
+                        const cell = document.querySelector(`[data-row="${r}"][data-col="${c}"]`);
+                        if (!fixed[r][c]) cell.classList.add('error');
+                    }
+                }
+            }
+            
+            if (correct) {
+                document.getElementById('status').textContent = 'Congratulations! Puzzle solved! 🎉';
+            } else {
+                document.getElementById('status').textContent = 'Some cells are incorrect. Keep trying!';
+            }
+        }
+
+        function resetGame() {
+            generatePuzzle();
+            selectedCell = null;
+            document.getElementById('status').textContent = 'Select a cell and enter a number';
+            initBoard();
+        }
+
+        generatePuzzle();
+        initBoard();
+    </script>
+</body>
+</html>
+
